@@ -4,7 +4,7 @@
    ══════════════════════════════════════════════════════ */
 
 const GITHUB_USER = "obito-uchiha-nidt";
-const GITHUB_REPO = "my-portfolio";
+const GITHUB_REPO = "My-portfoliyo";
 const GITHUB_FILE = "portfolio-data.json";
 const GITHUB_API  = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
 
@@ -244,3 +244,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     initReveal();
   },0);
 });
+     
