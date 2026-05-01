@@ -1,0 +1,42 @@
+{
+  "profile": {
+    "name": "Nazrul Islam",
+    "title": "Creative Developer",
+    "tagline": "I craft digital experiences that live at the intersection of code & art.",
+    "email": "nidt845418@gmail.com",
+    "location": "Dhaka, East Champaran",
+    "avatarText": "NI",
+    "bio": "I'm a full-stack developer with 6+ years of experience building products that millions of people use. Passionate about clean code, beautiful interfaces, and solving hard problems.",
+    "resumeLink": "#",
+    "photo": ""
+  },
+  "stats": [
+    {"id": 1, "number": "6+", "label": "Years Exp."},
+    {"id": 2, "number": "40+", "label": "Projects"},
+    {"id": 3, "number": "20+", "label": "Clients"}
+  ],
+  "socialLinks": [
+    {"id": 1, "label": "GitHub",   "url": "https://github.com/obito-uchiha-nidt", "visibleOnPortfolio": true},
+    {"id": 2, "label": "LinkedIn", "url": "https://linkedin.com/", "visibleOnPortfolio": true},
+    {"id": 3, "label": "Twitter",  "url": "https://twitter.com/",  "visibleOnPortfolio": true}
+  ],
+  "skills": [
+    {"id": 1, "name": "HTML / CSS",     "level": 95, "category": "Frontend"},
+    {"id": 2, "name": "JavaScript",     "level": 90, "category": "Frontend"},
+    {"id": 3, "name": "React",          "level": 80, "category": "Frontend"},
+    {"id": 4, "name": "Node.js",        "level": 75, "category": "Backend"},
+    {"id": 5, "name": "UI / UX Design", "level": 85, "category": "Design"}
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "Smart Door Unlock System",
+      "description": "A smart IoT-based door unlock system with mobile control and real-time monitoring.",
+      "tech": ["IoT", "JavaScript", "Node.js"],
+      "link": "#",
+      "github": "#",
+      "color": "#c9a84c"
+    }
+  ],
+  "posts": []
+}
