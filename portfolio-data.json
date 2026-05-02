@@ -83,13 +83,11 @@
     {
       "id": 1,
       "title": "Smart Door Unlock System",
-      "description": "A smart IoT-based door unlock system with mobile control and real-time monitoring.",
+      "description": "A smart door unlock system. It works through the password.",
       "tech": [
-        "IoT",
-        "JavaScript",
-        "Node.js"
+        "ARDUINO UNO"
       ],
-      "link": "#",
+      "link": "https://www.instagram.com/reel/DXwDfMrMyv3/?igsh=aHg3ZDk3OHo3bzMx",
       "github": "#",
       "color": "#c9a84c"
     }
