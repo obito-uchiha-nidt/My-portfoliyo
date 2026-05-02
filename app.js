@@ -94,15 +94,20 @@ function renderProfile(data){
   const resumeEl=document.getElementById("resume-link");
   if(resumeEl) resumeEl.href=profile.resumeLink||"#";
 
-  // Photo
+  // Photo — cache-bust GitHub raw URLs so fresh image always loads
+  const _ph = profile.photo
+    ? (profile.photo.includes("raw.githubusercontent.com")
+        ? profile.photo.split("?")[0] + "?t=" + Date.now()
+        : profile.photo)
+    : "";
   const heroInner=document.getElementById("hero-photo-inner");
-  if(heroInner) heroInner.innerHTML=profile.photo
-    ?`<img src="${profile.photo}" alt="${profile.name}" />`
-    :`<span class="photo-initials">${profile.avatarText||"AR"}</span>`;
+  if(heroInner) heroInner.innerHTML=_ph
+    ?`<img src="${_ph}" alt="${profile.name}" />`
+    :`<span class="photo-initials">${profile.avatarText||"NI"}</span>`;
   const aboutAv=document.getElementById("about-avatar-el");
-  if(aboutAv) aboutAv.innerHTML=profile.photo
-    ?`<img src="${profile.photo}" alt="${profile.name}" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:4px;" />`
-    :profile.avatarText||"AR";
+  if(aboutAv) aboutAv.innerHTML=_ph
+    ?`<img src="${_ph}" alt="${profile.name}" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:4px;" />`
+    :profile.avatarText||"NI";
 
   // Stats
   const statsEl=document.getElementById("about-stats");
