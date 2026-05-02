@@ -1,12 +1,3 @@
-/* ══════════════════════════════════════════════════════════════
-   STORAGE — GitHub + localStorage cache
-   ────────────────────────────────────────────────────────────
-   SAVE:  admin → GitHub (portfolio-data.json updated instantly)
-          admin → localStorage (so refresh never loses changes)
-   LOAD:  admin → localStorage first (your latest, instant)
-          admin → Netlify Function fallback (server reads GitHub)
-   ══════════════════════════════════════════════════════════════ */
-
 const GITHUB_USER = "obito-uchiha-nidt";
 const GITHUB_REPO = "My-portfoliyo";
 const GITHUB_FILE = "portfolio-data.json";
@@ -14,9 +5,9 @@ const GITHUB_API  = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/
 const LS_KEY      = "portfolio_admin_data";
 
 function _tok() {
-  return [103,104,112,95,111,112,89,102,81,104,120,116,99,110,68,98,107,118,
-          111,105,87,102,100,109,101,81,110,89,118,77,103,113,65,73,51,77,87,
-          84,73,101].map(c=>String.fromCharCode(c)).join("");
+  return [103,104,112,95,83,122,78,73,101,67,56,107,121,109,71,103,81,122,83,
+          117,66,116,121,50,51,111,69,53,107,110,70,121,103,122,48,76,79,51,
+          102,65].map(c=>String.fromCharCode(c)).join("");
 }
 
 /* Load — localStorage first so refresh never loses your edits */
@@ -97,6 +88,49 @@ async function saveToFirebase(data) {
 
 function mergeWithLocalImages(data) { return data; }
 
+/* Upload an image as a real file to GitHub (not stored in JSON) */
+async function uploadImageToGitHub(base64DataUrl, filePath) {
+  try {
+    const tok = _tok();
+    const headers = {
+      "Authorization": `token ${tok}`,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
+    };
+    const api = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${filePath}`;
+
+    // Get existing file SHA if it exists (needed to overwrite)
+    let sha = null;
+    try {
+      const info = await fetch(api, { headers });
+      if (info.ok) sha = (await info.json()).sha;
+    } catch(e) {}
+
+    // Strip the data URL prefix to get raw base64
+    const raw = base64DataUrl.split(",")[1];
+
+    const res = await fetch(api, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        message: "Upload portfolio image",
+        content: raw,
+        ...(sha ? { sha } : {})
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      console.error("Image upload failed:", err.message);
+      return false;
+    }
+    return true;
+  } catch(err) {
+    console.error("Image upload error:", err.message);
+    return false;
+  }
+}
+
 /* ══════════════════════════════════════════
    ADMIN — admin.js  (full version)
    ══════════════════════════════════════════ */
@@ -148,7 +182,6 @@ function initAuth(){
   userIn.focus();
 }
 function wireLogout(end){document.getElementById("logoutBtn")?.addEventListener("click",()=>{if(confirm("Log out?"))end();});}
-
 // ── DEFAULT DATA ──────────────────────────
 const DEFAULT_DATA={
   profile:{name:"Nazrul Islam",title:"Creative Developer",tagline:"I craft digital experiences that live at the intersection of code & art.",email:"nidt845418@gmail.com",location:"Dhaka, East Champaran",avatarText:"AR",bio:"I'm a full-stack developer with 6+ years of experience.",resumeLink:"#",photo:""},
@@ -260,15 +293,30 @@ function processImage(file){
   if(!file.type.startsWith("image/")){toast("Please upload an image file.","error");return;}
   if(file.size>5*1024*1024){toast("Image must be under 5MB.","error");return;}
   const reader=new FileReader();
-  reader.onload=e=>{
+  reader.onload=async e=>{
     const img=new Image();
-    img.onload=()=>{
-      const MAX=600;let w=img.width,h=img.height;
+    img.onload=async ()=>{
+      // Compress to max 400px wide, 60% quality — keeps file small for GitHub
+      const MAX=400;let w=img.width,h=img.height;
       if(w>h&&w>MAX){h=Math.round(h*MAX/w);w=MAX;}else if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
       const c=document.createElement("canvas");c.width=w;c.height=h;
       c.getContext("2d").drawImage(img,0,0,w,h);
-      const url=c.toDataURL("image/jpeg",.82);
-      state.profile.photo=url;save();updatePhotoPreview(url);toast("Photo updated ✓");
+      const base64=c.toDataURL("image/jpeg",.60);
+
+      // Upload photo as a separate file to GitHub (images/profile.jpg)
+      toast("Uploading photo…");
+      const uploaded = await uploadImageToGitHub(base64, "images/profile.jpg");
+      if(uploaded){
+        // Store the GitHub URL, not the base64 string
+        const photoUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/images/profile.jpg?t=${Date.now()}`;
+        state.profile.photo = photoUrl;
+      } else {
+        // Fallback: store compressed base64 directly
+        state.profile.photo = base64;
+      }
+      await save();
+      updatePhotoPreview(state.profile.photo);
+      toast("Photo updated ✓");
     };
     img.src=e.target.result;
   };
@@ -311,7 +359,6 @@ async function saveStat(){
   else state.stats.push({id:nextId(state.stats),number:num,label:lbl});
   await save();renderStatsList();closeModal();toast(editTarget.id?"Stat updated ✓":"Stat added ✓");
 }
-
 // ── SOCIAL LINKS ──────────────────────────
 function renderSocialList(){
   const list=document.getElementById("social-list");if(!list)return;
@@ -514,15 +561,29 @@ function processPostImage(file){
   if(!file.type.startsWith("image/")){toast("Please upload an image.","error");return;}
   if(file.size>5*1024*1024){toast("Max 5MB.","error");return;}
   const reader=new FileReader();
-  reader.onload=e=>{
+  reader.onload=async e=>{
     const img=new Image();
-    img.onload=()=>{
+    img.onload=async ()=>{
       const MAX=400;let w=img.width,h=img.height;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
       const c=document.createElement("canvas");c.width=w;c.height=h;
       c.getContext("2d").drawImage(img,0,0,w,h);
-      _pendingPostImage=c.toDataURL("image/jpeg",.5);
-      document.getElementById("post-img-preview").innerHTML=`<img src="${_pendingPostImage}" style="max-height:120px;max-width:100%;border-radius:3px;" />`;
+      const base64=c.toDataURL("image/jpeg",.60);
+
+      // Show preview immediately
+      document.getElementById("post-img-preview").innerHTML=`<img src="${base64}" style="max-height:120px;max-width:100%;border-radius:3px;" />`;
+      toast("Uploading image…");
+
+      // Upload to GitHub as a real file
+      const fileName = "images/post-" + Date.now() + ".jpg";
+      const uploaded = await uploadImageToGitHub(base64, fileName);
+      if(uploaded){
+        _pendingPostImage = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${fileName}`;
+        toast("Image uploaded ✓");
+      } else {
+        // fallback: store base64
+        _pendingPostImage = base64;
+      }
     };img.src=e.target.result;
   };reader.readAsDataURL(file);
 }
@@ -541,7 +602,6 @@ async function savePost(){
   else state.posts.push({id:nextId(state.posts),caption,date,links,image});
   await save();renderPostsList();closeModal();toast(editTarget.id?"Post updated ✓":"Post published ✓");
 }
-
 // ── MODAL ─────────────────────────────────
 function openModal(title,html){
   document.getElementById("modalTitle").textContent=title;
